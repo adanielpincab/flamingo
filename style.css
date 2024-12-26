@@ -1,0 +1,63 @@
+:root {
+    --tile-size: 2em;
+    font-family: sans-serif;
+}
+
+body, html {
+    height: 100%;
+    width: 100%;
+}
+
+body {
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+}
+
+#debug {
+    position: absolute;
+    top: 50px;
+    left: 50px;
+}
+
+#table {
+    border: 2px solid black;
+
+    display: grid;
+    grid-template-columns: repeat(6, auto);
+    grid-template-rows: repeat(6, auto);
+}
+
+#table>div {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--tile-size);
+    border: calc(var(--tile-size)/30) solid lightgray;
+    box-sizing: border-box;
+}
+
+.help {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    background: gray;
+    color: white;
+    border-radius: 50%;
+
+    font-size: 0.6em;
+    padding: 0.3em;
+    width: 0.6em;
+    height: 0.6em;
+}
+
+.help.left { transform: translateX(calc((var(--tile-size) + var(--tile-size)/15)/-2)); }
+.help.up { transform: translateY(calc((var(--tile-size) + var(--tile-size)/15)/-2)); }
+.help.down { transform: translateY(calc((var(--tile-size) + var(--tile-size)/15)/2)); }
+.help.right { transform: translateX(calc((var(--tile-size) + var(--tile-size)/15)/2)); }
