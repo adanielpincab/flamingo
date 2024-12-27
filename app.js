@@ -409,11 +409,17 @@ clear.addEventListener('click', () => {
     renderTable(playerTable)
 })
 
-shareBtn.addEventListener("click", async () => {
-    try {
-      await navigator.share({url: 'https://google.com', text: 'Busca en google conmigo!'})
-    } catch (err) {
-        console.log("a")
+shareBtn.addEventListener("click", () => {
+    if (navigator.share) {
+        navigator.share({
+          title: document.title,
+          text: 'Try to beat ' + cronometer.textContent + '! Flamingo #' + diffDays,
+          url: window.location.href
+        })
+        .then(() => console.log('Page shared successfully!'))
+        .catch((error) => console.error('Error sharing the page:', error));
+    } else {
+    console.log('Web Share API is not supported in this browser.');
     }
 });
 
