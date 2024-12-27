@@ -325,13 +325,19 @@ title.textContent = "Flamingo #" + diffDays
 dateSubtitle.textContent = readableDate
 
 var finished = false
+
 function finish() {
+    console.log("holaaaaaa")
     if (finished) {return}
     finished = true
 
     table.classList.add("finished")
     finalScreen.style.opacity = 1
     finalTime.textContent = cronometer.textContent
+
+    localStorage.setItem('last-solved', diffDays)
+    localStorage.setItem('solved-time', cronometer.textContent)
+    localStorage.setItem('solved-state', JSON.stringify(playerTable.table))
 }
 
 function renderTable(game) {
@@ -448,3 +454,11 @@ h.textContent = "="
 h.classList.add("help")
 h.classList.add("right")
 document.getElementById("example2").appendChild(h)
+
+// If already solved today's, loads the finished state
+if (localStorage.getItem('last-solved') == diffDays) {
+    playerTable.table = JSON.parse(localStorage.getItem('solved-state'))
+    renderTable(playerTable)
+    cronometer.textContent = localStorage.getItem('solved-time')
+    finish()
+}
