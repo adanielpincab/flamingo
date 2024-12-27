@@ -7,14 +7,73 @@
     <title>Flamenco</title>
 </head>
 <body>
-    <div id="final-screen">
-        FIN
+    <div id="help-screen">
+        <p>There can <b>not</b> be more than two of the same figure together, in any row or column.</p>
+        <div>
+            <div class="example tile wrong">A</div>
+            <div class="example tile wrong">A</div>
+            <div class="example tile wrong">A</div>
+            <span class="red">wrong</span>
+        </div>
+        <div>
+            <div class="example tile">A</div>
+            <div class="example tile">B</div>
+            <div class="example tile">A</div>
+            <span class="green">right</span>
+        </div>
+
+        <p>Every row and column must have the <b>same number</b> of both.</p>
+        <div>
+            <div class="example tile wrong">A</div>
+            <div class="example tile wrong">A</div>
+            <div class="example tile">B</div>
+            <div class="example tile wrong">A</div>
+            <div class="example tile wrong">A</div>
+            <div class="example tile">B</div>
+            <span class="red">wrong</span>
+        </div>
+        <div>
+            <div class="example tile">A</div>
+            <div class="example tile">A</div>
+            <div class="example tile">B</div>
+            <div class="example tile">B</div>
+            <div class="example tile">A</div>
+            <div class="example tile">B</div>
+            <span class="green">right</span>
+        </div>
+
+        <p>Signs must be followed. If two tiles are separated by an <b>'x' sign, they must be different</b>. If it's a <b>'=' sign, they must be equal</b>.</p>
+        <div>
+            <div id="example1" class="example tile">A</div>
+            <div class="example tile">B</div>
+            <span class="green">right</span>
+        </div>
+        <div>
+            <div id="example2" class="example tile">A</div>
+            <div class="example tile">A</div>
+            <span class="green">right</span>
+        </div>
+
+        <p>Complete the whole square of tiles. The fastest wins!</p>
+        <button id="tutorial-ready">I'm ready!</button>
     </div>
+    <button id="help-button">?</button>
+    <h1 id="title">Flamenco #0</h1>
+    <h2 id="date">Fecha y hora</h2>
     <div class="header">
-        <div id="cronometer"></div>
+        <div id="cronometer" class="stopped"></div>
         <button id="clear">CLEAR</button>
     </div>
-    <div id="table">
+    <div id="table" class="">
+    </div>
+    <div id="final-screen">
+        <div>
+            <h1>FINISHED</h1>
+            <b id="final-time"></b>
+        </div>
+        <div>
+            <img id="share" src="assets/icons/share.svg">
+        </div>
     </div>
 </body>
 <script src="app.js"></script>

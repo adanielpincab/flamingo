@@ -52,6 +52,7 @@ class Game {
         console.log("Creating helps...")
         this.helps = []
         let numberOfHelps = this.getRandomInt(2, 18);
+        // TEST let numberOfHelps = this.getRandomInt(50, 50);
         for (let i = 0; i < numberOfHelps; i++) {
             let help = {};
             let possibleDirections = []
@@ -92,6 +93,7 @@ class Game {
         console.log("Creating shown tiles...")
         this.shows = []
         let numberOfShows = this.getRandomInt(2, 10);
+        // TEST let numberOfShows = this.getRandomInt(35, 35);
         for (let i = 0; i < numberOfShows; i++) {
             this.shows.push(this.randomPos())
         }
@@ -140,6 +142,8 @@ class Game {
                 && (count(letter, column.slice(i+1, Math.min(i+3, 6))) < 2)
                 && (count(letter, row.slice(Math.max(0, j-2), j)) < 2)
                 && (count(letter, row.slice(j+1, Math.min(j+3, 6))) < 2)
+                && (count(letter, [row[Math.max(j-1, 0)], row[Math.min(j+1, 5)]]) < 2)
+                && (count(letter, [column[Math.max(i-1, 0)], column[Math.min(i+1, 5)]]) < 2)
             ) {
                 possible.push(letter)
             }
@@ -175,12 +179,11 @@ class Game {
                 ){
                 if (this.table[compareWith.i][compareWith.j] == 0) { continue }
                 if (this.table[help.position.i][help.position.j] == 0) { continue }
-
                 if (
-                    ((help.type == "equal") && (
+                    ((help.sign == "=") && (
                         this.table[help.position.i][help.position.j] != 
                         this.table[compareWith.i][compareWith.j])) ||
-                    ((help.type == "opposite") && (
+                    ((help.sign == "×") && (
                         this.table[help.position.i][help.position.j] == 
                         this.table[compareWith.i][compareWith.j]))
                 ){
@@ -195,7 +198,6 @@ class Game {
             }
         }
 
-        console.log(this.validsAtPosition(i, j))
         return false
     }
 
@@ -220,7 +222,7 @@ class Game {
             }   
         }
 
-        return this.invalidPositions().length = 0
+        return (this.invalidPositions().length == 0)
     }
 
     emptyTable() {
@@ -253,6 +255,8 @@ class PlayerTable extends Game {
     }
 
     toggle(i, j) {
+        this.lastClicked = null;
+
         if (this.isFinished()) {return}
         for (let show of this.shows) {
             if (show.i == i && show.j == j) {
@@ -260,7 +264,6 @@ class PlayerTable extends Game {
             }
         }
 
-        this.lastClicked = null;
         switch (this.table[i][j]) {
             case "A":
                 this.table[i][j] = "B"
@@ -281,7 +284,17 @@ class PlayerTable extends Game {
     }
 }
 
-game = new Game()
+// ---------------------------------------------------------------------------
+
+const oneDay = 24 * 60 * 60 * 1000; // hours*minutes*seconds*milliseconds
+const firstDate = new Date('2024-12-27T00:00:00');
+const secondDate = new Date();
+
+const diffDays = Math.round(Math.abs((firstDate - secondDate) / oneDay));
+
+console.log("days elapsed since start:", diffDays)
+
+game = new Game(diffDays)
 playerTable = new PlayerTable(game.code)
 
 const debug = document.getElementById("debug")
@@ -294,6 +307,32 @@ const emojis = {
 const clear = document.getElementById("clear")
 const cronometer = document.getElementById("cronometer")
 const finalScreen = document.getElementById("final-screen")
+const shareBtn = document.getElementById("share")
+const finalTime = document.getElementById("final-time")
+const title = document.getElementById("title")
+const dateSubtitle = document.getElementById("date")
+const readableDate = secondDate.toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+});
+const helpButton = document.getElementById("help-button")
+const tutorialReady = document.getElementById("tutorial-ready")
+const helpScreen = document.getElementById("help-screen")
+
+title.textContent = "Flamingo #" + diffDays
+dateSubtitle.textContent = readableDate
+
+var finished = false
+function finish() {
+    if (finished) {return}
+    finished = true
+
+    table.classList.add("finished")
+    finalScreen.style.opacity = 1
+    finalTime.textContent = cronometer.textContent
+}
 
 function renderTable(game) {
     table.innerHTML = "";
@@ -333,29 +372,19 @@ function renderTable(game) {
 }
 renderTable(playerTable)
 
-table.addEventListener('click', (event) => {
-    playerTable.toggle(Math.floor(event.target.id / 6), event.target.id % 6)
-    renderTable(playerTable)
-
-    if (playerTable.isFinished()) {
-        finalScreen.style.display = "initial";
-        finalScreen.style.opacity = 1;
-    }
-    console.warn(playerTable.isFinished())
-})
-
-clear.addEventListener('click', () => {
-    playerTable.clear()
-    renderTable(playerTable)
-})
-
 if (!playerTable.started) { cronometer.textContent = "0:00" }
 
 setInterval(() => {
     if (!playerTable.started) {
         cronometer.textContent = "0:00"
+        cronometer.classList.add("stopped")
+        return
+    } else if (finished) {
+        cronometer.classList.add("stopped")
         return
     }
+
+    cronometer.classList.remove("stopped")
     const elapsedMilliseconds = Date.now() - playerTable.started; 
     const elapsedSeconds = Math.floor(elapsedMilliseconds / 1000);
 
@@ -363,4 +392,53 @@ setInterval(() => {
     const seconds = elapsedSeconds % 60;
 
     cronometer.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-}, 1000); // Actualiza cada segundo
+}, 500); 
+
+table.addEventListener('click', (event) => {
+    playerTable.toggle(Math.floor(event.target.id / 6), event.target.id % 6)
+    renderTable(playerTable)
+
+    if (playerTable.isFinished()) {
+        finish()
+    }
+})
+
+clear.addEventListener('click', () => {
+    if (finished) { return }
+    playerTable.clear()
+    renderTable(playerTable)
+})
+
+shareBtn.addEventListener("click", async () => {
+    try {
+      await navigator.share({url: 'https://google.com', text: 'Busca en google conmigo!'})
+    } catch (err) {
+        console.log("a")
+    }
+});
+
+helpButton.addEventListener("click", ()=>{
+    helpScreen.style.display = "flex"
+})
+
+tutorialReady.addEventListener("click", ()=>{
+    helpScreen.style.display = "none"
+})
+
+Array.from(document.getElementsByClassName("example")).forEach((el) => {
+    if (el.classList.contains("tile")) {
+        el.textContent = emojis[el.textContent]
+    }
+})
+
+let h = document.createElement("div")
+h.textContent = "×"
+h.classList.add("help")
+h.classList.add("right")
+document.getElementById("example1").appendChild(h)
+
+h = document.createElement("div")
+h.textContent = "="
+h.classList.add("help")
+h.classList.add("right")
+document.getElementById("example2").appendChild(h)
