@@ -30,12 +30,7 @@ class Game {
         // Bruteforce a random solved table
         let found = false;
         while (!found) {
-            this.table = [] // 0 (empty) |  A  |  B
-            for (let i = 0; i < 6; i++) {
-                this.table.push(
-                    [0, 0, 0, 0, 0, 0]
-                )
-            }
+            this.emptyTable()
 
             console.log("Bruteforcing new table...");
             found = true
@@ -56,7 +51,7 @@ class Game {
         // Create random helps for the player
         console.log("Creating helps...")
         this.helps = []
-        let numberOfHelps = this.getRandomInt(2, 8);
+        let numberOfHelps = this.getRandomInt(2, 18);
         for (let i = 0; i < numberOfHelps; i++) {
             let help = {};
             let possibleDirections = []
@@ -85,9 +80,9 @@ class Game {
             }
 
             if (this.table[help.position.i][help.position.j] == this.table[compareWith.i][compareWith.j]) {
-                help.sign = "="
+                help.type = "equal"
             } else {
-                help.sign = "×"
+                help.type = "opposite"
             }
 
             this.helps.push(help)
@@ -96,7 +91,7 @@ class Game {
 
         console.log("Creating shown tiles...")
         this.shows = []
-        let numberOfShows = this.getRandomInt(2, 5);
+        let numberOfShows = this.getRandomInt(2, 10);
         for (let i = 0; i < numberOfShows; i++) {
             this.shows.push(this.randomPos())
         }
@@ -131,6 +126,10 @@ class Game {
             column.push(this.table[r][j])
         }
 
+        // we don't have in account the tile we are checking
+        row[j] = 0
+        column[i] = 0
+
         let possible = []
 
         for ( let letter of ["A", "B"] ) {
@@ -152,25 +151,64 @@ class Game {
     isValidPos(i, j) {
         let char = this.table[i][j]
 
-        for (let i of this.validsAtPosition(i, j)) {
-            if (char == i) {
+        if (char == 0) { return true }
+
+        for (let help of this.helps) {
+            let compareWith = structuredClone(help.position)
+            switch (help.direction) {
+                case "up": 
+                    compareWith.i -= 1; 
+                    break;
+                case "down": 
+                    compareWith.i += 1; 
+                    break;
+                case "left": 
+                    compareWith.j -= 1; 
+                    break;
+                case "right": 
+                    compareWith.j += 1; 
+                    break;
+            }
+            if (
+                (help.position.i == i && help.position.j == j) || 
+                (compareWith.i == i && compareWith.j == j) 
+                ){
+                if (this.table[compareWith.i][compareWith.j] == 0) { continue }
+                if (this.table[help.position.i][help.position.j] == 0) { continue }
+
+                if (
+                    ((help.type == "equal") && (
+                        this.table[help.position.i][help.position.j] != 
+                        this.table[compareWith.i][compareWith.j])) ||
+                    ((help.type == "opposite") && (
+                        this.table[help.position.i][help.position.j] == 
+                        this.table[compareWith.i][compareWith.j]))
+                ){
+                    return false;
+                }
+            }
+        }
+
+        for (let x of this.validsAtPosition(i, j)) {
+            if (char == x) {
                 return true
             }
         }
 
+        console.log(this.validsAtPosition(i, j))
         return false
     }
 
-    isValidTable() {
-        // [true, undefined] | [false, error_coordinate]
+    invalidPositions() {
+        let invalidList = []
         for (let i = 0; i < 6; i++) {
             for (let j = 0; j < 6; j++) {
                 if (!this.isValidPos(i, j)) {
-                    return [false, [i, j]]
+                    invalidList.push({i: i, j: j})
                 }
             }   
         }
-        return [true, undefined]
+        return invalidList
     }
 
     isFinished() {
@@ -181,37 +219,146 @@ class Game {
                 }
             }   
         }
-        return true
+
+        return this.invalidPositions().length = 0
+    }
+
+    emptyTable() {
+        this.table = [] // 0 (empty) |  A  |  B
+        for (let i = 0; i < 6; i++) {
+            this.table.push(
+                [0, 0, 0, 0, 0, 0]
+            )
+        }
     }
 } 
 
+class PlayerTable extends Game {
+    constructor(code) {
+        super(code)
+        this.clear()
+    }
 
-game = new Game(10)
+    clear() {
+        let savedShows = []
+        for (let show of this.shows) {
+            savedShows.push(this.table[show.i][show.j])
+        }
+
+        this.emptyTable()
+        
+        for (let show of this.shows) {
+            this.table[show.i][show.j] = savedShows.shift()
+        }
+    }
+
+    toggle(i, j) {
+        if (this.isFinished()) {return}
+        for (let show of this.shows) {
+            if (show.i == i && show.j == j) {
+                return
+            }
+        }
+
+        this.lastClicked = null;
+        switch (this.table[i][j]) {
+            case "A":
+                this.table[i][j] = "B"
+                break;
+            case "B":
+                this.table[i][j] = 0
+                break;
+            default:
+                this.table[i][j] = "A";
+        }
+        this.lastClicked = {i: i, j: j};
+        if (!this.started) {
+            this.started = Date.now()
+        }
+        if (this.isFinished()) {
+            this.completionTime = Date.now()-this.started
+        }
+    }
+}
+
+game = new Game()
+playerTable = new PlayerTable(game.code)
 
 const debug = document.getElementById("debug")
 const table = document.getElementById("table")
 const emojis = {
     A: "🍑",
-    B: "🍏"
+    B: "🍏",
+    0: " "
 }
+const clear = document.getElementById("clear")
+const cronometer = document.getElementById("cronometer")
+const finalScreen = document.getElementById("final-screen")
 
-for (let i = 0; i < 6; i++) {
-    for (let j = 0; j < 6; j++) {
-        let tile = document.createElement("div")
-        tile.id = 6*i + j
-        tile.textContent = emojis[game.table[i][j]] 
-        table.appendChild(tile)
-
-        debug.innerHTML += game.table[i][j]
+function renderTable(game) {
+    table.innerHTML = "";
+    for (let i = 0; i < 6; i++) {
+        for (let j = 0; j < 6; j++) {
+            let tile = document.createElement("div")
+            tile.classList.add("tile")
+            tile.id = 6*i + j
+            tile.textContent = emojis[game.table[i][j]]
+            table.appendChild(tile)
+        }
     }
-    debug.innerHTML+="<br/>"
+    // helps
+    for (let help of game.helps){
+        let id = 6*help.position.i + help.position.j
+        document.getElementById(id).classList.add("help")
+        document.getElementById(id).classList.add(help.type)
+        document.getElementById(id).classList.add(help.direction)
+    }
+    //shows
+    for (let show of game.shows) {
+        let id = 6*show.i + show.j
+        document.getElementById(id).classList.add("show")
+    }
+    // animations
+    if (game.lastClicked) {
+        let id = 6*game.lastClicked.i + game.lastClicked.j
+        document.getElementById(id).classList.add("last-clicked")
+    }
+    // wrong tiles
+    console.warn(game.invalidPositions())
+    for (let wrong of game.invalidPositions()) {
+        let id = 6*wrong.i + wrong.j
+        document.getElementById(id).classList.add("wrong")
+    }
 }
+renderTable(playerTable)
 
-for (let help of game.helps){
-    let id = 6*help.position.i + help.position.j
-    let helpBox = document.createElement("div")
-    helpBox.classList.add("help")
-    helpBox.classList.add(help.direction)
-    helpBox.textContent = help.sign
-    document.getElementById(id).appendChild(helpBox)
-}
+table.addEventListener('click', (event) => {
+    playerTable.toggle(Math.floor(event.target.id / 6), event.target.id % 6)
+    renderTable(playerTable)
+
+    if (playerTable.isFinished()) {
+        finalScreen.style.display = "initial";
+        finalScreen.style.opacity = 1;
+    }
+})
+
+clear.addEventListener('click', () => {
+    playerTable.clear()
+    renderTable(playerTable)
+})
+
+if (!playerTable.started) { cronometer.textContent = "0:00" }
+
+setInterval(() => {
+    if (!playerTable.started) {
+        cronometer.textContent = "0:00"
+        return
+    }
+    const elapsedMilliseconds = Date.now() - playerTable.started; 
+    const elapsedSeconds = Math.floor(elapsedMilliseconds / 1000);
+
+    const minutes = Math.floor(elapsedSeconds / 60);
+    const seconds = elapsedSeconds % 60;
+
+    cronometer.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+}, 1000); // Actualiza cada segundo
