@@ -80,9 +80,9 @@ class Game {
             }
 
             if (this.table[help.position.i][help.position.j] == this.table[compareWith.i][compareWith.j]) {
-                help.type = "equal"
+                help.sign = "="
             } else {
-                help.type = "opposite"
+                help.sign = "×"
             }
 
             this.helps.push(help)
@@ -309,9 +309,11 @@ function renderTable(game) {
     // helps
     for (let help of game.helps){
         let id = 6*help.position.i + help.position.j
-        document.getElementById(id).classList.add("help")
-        document.getElementById(id).classList.add(help.type)
-        document.getElementById(id).classList.add(help.direction)
+        let h = document.createElement("div")
+        h.textContent = help.sign
+        h.classList.add("help")
+        h.classList.add(help.direction)
+        document.getElementById(id).appendChild(h)
     }
     //shows
     for (let show of game.shows) {
@@ -324,7 +326,6 @@ function renderTable(game) {
         document.getElementById(id).classList.add("last-clicked")
     }
     // wrong tiles
-    console.warn(game.invalidPositions())
     for (let wrong of game.invalidPositions()) {
         let id = 6*wrong.i + wrong.j
         document.getElementById(id).classList.add("wrong")
@@ -340,6 +341,7 @@ table.addEventListener('click', (event) => {
         finalScreen.style.display = "initial";
         finalScreen.style.opacity = 1;
     }
+    console.warn(playerTable.isFinished())
 })
 
 clear.addEventListener('click', () => {
